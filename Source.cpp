@@ -29,7 +29,6 @@ struct comp
 {
 	bool operator()(Node* l, Node* r)
 	{
-		// highest priority item has lowest frequency
 		return l->freq > r->freq;
 	}
 };
@@ -92,11 +91,10 @@ void buildHuffmanTree(string text, bool isFile)
 	for (char ch : text) {
 		freq[ch]++;
 	}
-	// Create a priority queue to store live nodes of
-	// Huffman tree;
+	// Create a priority queue 
 	priority_queue<Node*, vector<Node*>, comp> pq;
 	// Create a leaf node for each character, add it
-	// to the priority queue.
+	// to  priority queue.
 	for (auto pair : freq) {
 		pq.push(getNode(pair.first, pair.second, nullptr, nullptr));
 	}
@@ -110,11 +108,10 @@ void buildHuffmanTree(string text, bool isFile)
 	}
 	// root stores pointer to root of Huffman Tree
 	Node* root = pq.top();
-	// Traverse the Huffman Tree and store Huffman Codes
-	// in a map and print them
+	// Traverse the Huffman Tree and store Huffman Code in a map and print them
 	unordered_map<char, string> huffmanCode;
 	encode(root, EMPTY_STRING, huffmanCode);
-
+	//string not input from a file (part 1)
 	if (!isFile)
 	{
 		cout << "Codes:" << "\t\tFrequency:"<< endl;
@@ -151,10 +148,11 @@ void buildHuffmanTree(string text, bool isFile)
 		}
 		cout << endl;
 	}
+	//string input from a file (part 2)
 	else
 	{
-		//open file to write to
-		ofstream enc("encode.txt");
+		//open binary file to write to
+		ofstream enc("encode.bin", ios::binary);
 		string str;
 		for (char ch : text) 
 		{
@@ -165,13 +163,17 @@ void buildHuffmanTree(string text, bool isFile)
 		int i = 0;
 		while (i < str.length())
 		{
+			if (i + 8 >= str.length())
+			{
+				break;
+			}
 			bitset<8>set(str.substr(i, i + 8));
 			enc << char(set.to_ulong());
 			i = i + 8;
 		}
 		enc.close();
 		//decompression of encoded file 
-		ifstream readEnc("encode.txt");
+		ifstream readEnc("encode.bin", ios::binary);
 		string out((istreambuf_iterator<char>(readEnc)), (istreambuf_iterator<char>()));
 		string dec = "";
 		//convert from ascii to binary using bitsets
