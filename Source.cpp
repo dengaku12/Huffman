@@ -8,13 +8,13 @@ using namespace std;
 
 #define EMPTY_STRING ""
 
+string decstr = "";
 struct Node
 {
 	char ch;
 	int freq;
 	Node *left, *right;
 };
-
 Node* getNode(char ch, int freq, Node* left, Node* right)
 {
 	Node* node = new Node();
@@ -33,20 +33,21 @@ struct comp
 		return l->freq > r->freq;
 	}
 };
-
 //check if Huffman Tree contains a single node
-bool isLeaf(Node* root) {
+bool isLeaf(Node* root)
+{
 	return root->left == nullptr && root->right == nullptr;
 }
-
-// Traverse the Huffman Tree and store Huffman Codes in a map.
+// Traverse the Huffman Tree, store Huffman Codes in a map.
 void encode(Node* root, string str, unordered_map<char, string> &huffmanCode)
 {
-	if (root == nullptr) {
+	if (root == nullptr) 
+	{
 		return;
 	}
 	// leaf node is found
-	if (isLeaf(root)) {
+	if (isLeaf(root)) 
+	{
 		huffmanCode[root->ch] = (str != EMPTY_STRING) ? str : "1";
 	}
 	encode(root->left, str + "0", huffmanCode);
@@ -55,20 +56,24 @@ void encode(Node* root, string str, unordered_map<char, string> &huffmanCode)
 // Traverse the Huffman Tree and decode the encoded string
 void decode(Node* root, int &index, string str)
 {
-	
-	if (root == nullptr) {
+	if (root == nullptr)
+	{
 		return;
 	}
 	//leaf node is found
-	if (isLeaf(root)) {
+	if (isLeaf(root)) 
+	{
 		cout << root->ch;
+		decstr += root->ch;
 		return;
 	}
 	index++;
-	if (str[index] == '0') {
+	if (str[index] == '0') 
+	{
 		decode(root->left, index, str);
 	}
-	else {
+	else
+	{
 		decode(root->right, index, str);
 	}
 	
@@ -90,12 +95,11 @@ void buildHuffmanTree(string text, bool isFile)
 	// Create a priority queue to store live nodes of
 	// Huffman tree;
 	priority_queue<Node*, vector<Node*>, comp> pq;
-	// Create a leaf node for each character and add it
+	// Create a leaf node for each character, add it
 	// to the priority queue.
 	for (auto pair : freq) {
 		pq.push(getNode(pair.first, pair.second, nullptr, nullptr));
 	}
-	// do till there is more than one node in the queue
 	while (pq.size() != 1)
 	{
 		Node *left = pq.top(); pq.pop();
@@ -107,7 +111,7 @@ void buildHuffmanTree(string text, bool isFile)
 	// root stores pointer to root of Huffman Tree
 	Node* root = pq.top();
 	// Traverse the Huffman Tree and store Huffman Codes
-	// in a map. Also print them
+	// in a map and print them
 	unordered_map<char, string> huffmanCode;
 	encode(root, EMPTY_STRING, huffmanCode);
 
@@ -129,7 +133,6 @@ void buildHuffmanTree(string text, bool isFile)
 		cout << "\nDecoded string: ";
 		if (isLeaf(root))
 		{
-			// Special case: For input like a, aa, aaa, etc
 			while (root->freq--) 
 			{
 				cout << root->ch;
@@ -137,13 +140,14 @@ void buildHuffmanTree(string text, bool isFile)
 		}
 		else
 		{
-			// Traverse the Huffman Tree again and this time
+			// Traverse the Huffman Tree again 
 			// decode the encoded string
 			int index = -1;
-			while (index < (int)str.size() - 1) 
+			while (index < int(str.size()) - 1) 
 			{
 				decode(root, index, str);
 			}
+			decstr = "";
 		}
 		cout << endl;
 	}
@@ -156,31 +160,58 @@ void buildHuffmanTree(string text, bool isFile)
 		{
 			str += huffmanCode[ch];
 		}
-		//split Huffman code output into substrings of 8 bits (bitstream)
+		//split Huffman code output into substrings of 8 bits (bitset)
 		//convert 8 bit substrings into ASCII characters
 		int i = 0;
 		while (i < str.length())
 		{
-			bitset<8>set(str.substr(i, i + 7));
+			bitset<8>set(str.substr(i, i + 8));
 			enc << char(set.to_ulong());
 			i = i + 8;
 		}
 		enc.close();
+		//decompression of encoded file 
+		ifstream readEnc("encode.txt");
+		string out((istreambuf_iterator<char>(readEnc)), (istreambuf_iterator<char>()));
+		string dec = "";
+		//convert from ascii to binary using bitsets
+		for (char ch : out)
+		{
+			bitset<8> set(ch);
+			dec += set.to_string();
+		}
+		//decode the binary
+		int index = -1;
+		while (index < (int)dec.size() - 2)
+		{
+			decode(root, index, dec);
+		}
+		readEnc.close();
+		//write result to decode.txt output file
+		ofstream decoded("decode.txt");
+		for (char ch : decstr)
+		{
+			decoded << ch;
+		}
+		decstr = "";
+		decoded.close();
 	}
 	
 }
 
 int main()
 {
+	//user input
 	string text;
 	cout << "Enter a string:" << endl;
 	getline(cin, text);
 	buildHuffmanTree(text,false);
-
+	cout << endl;
+	//file input
 	ifstream input("input.txt");
-	string out((istreambuf_iterator<char>(input)), (istreambuf_iterator<char>()));
+	//entire file is stored into a string
+	string out((istreambuf_iterator<char>(input)), (istreambuf_iterator<char>())); 
 	buildHuffmanTree(out,true);
-	
 	
 	input.close();
 	system("pause");
